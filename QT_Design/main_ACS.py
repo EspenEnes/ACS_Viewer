@@ -59,5 +59,5 @@ class Ui_MainWindow(object):
         self.pushButton_2.setText(_translate("MainWindow", "Snapshot"))
         self.pushButton.setText(_translate("MainWindow", "Render"))
         self.menu_Config.setTitle(_translate("MainWindow", "&Config"))
-        self.actionACS.setText(_translate("MainWindow", "ACS"))
-        self.actionEnviorment.setText(_translate("MainWindow", "Enviorment"))
+        self.actionACS.setText(_translate("MainWindow", "Machines"))
+        self.actionEnviorment.setText(_translate("MainWindow", "Viewer"))

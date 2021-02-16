@@ -68,12 +68,12 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionACS">
    <property name="text">
-    <string>ACS</string>
+    <string>Machines</string>
    </property>
   </action>
   <action name="actionEnviorment">
    <property name="text">
-    <string>Enviorment</string>
+    <string>Viewer</string>
    </property>
   </action>
  </widget>

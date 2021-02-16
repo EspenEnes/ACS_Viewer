@@ -10,6 +10,7 @@ from PyQt5.QtCore import QRunnable, QThreadPool, QObject, pyqtSignal
 from PyQt5.QtGui import QMouseEvent, QWheelEvent
 from PyQt5.QtWidgets import QApplication
 
+
 import machine_config
 from QT_Design import main_ACS
 
@@ -46,10 +47,12 @@ class PlcWorker(QRunnable):
                 Zmin = self.data["Machine"][machine]["Data"][2][0]
                 Zmax = self.data["Machine"][machine]["Data"][2][1]
                 color = self.data["Machine"][machine]["Color"]
+                visible = self.data["Machine"][machine]["Visible"]
 
                 dataS7 = [snap7.util.get_real(DB, int(X)) for X in [Xmin, Xmax, Ymin, Ymax, Zmin, Zmax] if X.isdigit()]
                 data["data"] = dataS7
                 data["color"] = color
+                data["Visible"] = visible
 
                 send["machines"][name] = data
             send["origo"] = self.data["Origo"]
@@ -212,13 +215,15 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
         gluLookAt(*self.CamereMove())
 
         for count, machine in enumerate(self.Data["machines"].keys()):
+            if self.Data["machines"][machine]["Visible"] == "False":
+                continue
 
-            Xmin = self.Data["machines"][machine]["data"][0] / 1000.0
-            Xmax = self.Data["machines"][machine]["data"][1] / 1000.0
-            Ymin = self.Data["machines"][machine]["data"][2] / 1000.0
-            Ymax = self.Data["machines"][machine]["data"][3] / 1000.0
-            Zmin = self.Data["machines"][machine]["data"][4] / 1000.0
-            Zmax = self.Data["machines"][machine]["data"][5] / 1000.0
+            Xmin = self.Data["machines"][machine]["data"][0]# / 1000.0
+            Xmax = self.Data["machines"][machine]["data"][1]# / 1000.0
+            Ymin = self.Data["machines"][machine]["data"][2]# / 1000.0
+            Ymax = self.Data["machines"][machine]["data"][3]# / 1000.0
+            Zmin = self.Data["machines"][machine]["data"][4]# / 1000.0
+            Zmax = self.Data["machines"][machine]["data"][5]# / 1000.0
             color = self.hex_to_rgb(self.Data["machines"][machine]["color"])
 
             if self.Data["origo"][0][1]:
@@ -310,6 +315,13 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.buttons() == QtCore.Qt.LeftButton:
             self.mpos = event.pos()
+
+            pos = event.pos()
+            x = pos.x()
+            y = pos.y()
+            a = (GLuint * 1)(0)
+            glReadPixels(x,y,1,1,GL_RGB, GL_UNSIGNED_BYTE,a)
+            print(f"{a[0]:2x}")
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if event.buttons() == QtCore.Qt.LeftButton:

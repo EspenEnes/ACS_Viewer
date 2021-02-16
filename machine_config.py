@@ -1,24 +1,38 @@
 import json
+import random
 import sys
 
 import snap7
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QColorDialog
 
+from BoxGenerator import getData
 from QT_Design import machine_config
 
 
 class Model(QtCore.QAbstractTableModel):
     def __init__(self, channel=None):
         super(Model, self).__init__()
-        self._data = channel or {"Machine": {"0": {"Name": "New", "Data": [["1", "4"], ["2", "5"], ["3", "6"]]}}}
+        self._data = channel or {
+            "Machine": {"0": {"Name": "New", "Data": [["1", "4"], ["2", "5"], ["3", "6"]], "Visible": "True"}},
+            "PLC": ["", "", "", ""], "Origo": [["", ""], ["", ""], ["", ""]]}
+
 
     def data(self, index, role):
         if role == Qt.DisplayRole:
             keys = [x for x in self._data["Machine"].keys()]
             value = self._data["Machine"][keys[index.row()]]["Name"]
             return value
+        if role == Qt.FontRole:
+            font = QFont()
+            keys = [x for x in self._data["Machine"].keys()]
+            if self._data["Machine"][keys[index.row()]]["Visible"] == "False":
+                font.setStrikeOut(True)
+            else:
+                font.setStrikeOut(False)
+            return font
 
     def setData(self, index, value, role):
         if role == Qt.EditRole:
@@ -73,6 +87,19 @@ class MachineConfig(QtWidgets.QMainWindow, machine_config.Ui_MainWindow):
         self.selectionModel.currentChanged.connect(self.populate)
         self.pushButton_Snapshot.clicked.connect(self.snapshot)
         self.pushButton_Color.clicked.connect(self.openColorDialog)
+        self.pushButton_Load.clicked.connect(self.loadData)
+
+    def loadData(self):
+        clipboard = QApplication.clipboard().text()
+        data = getData(clipboard)
+        r = lambda: random.randint(0, 255)
+
+        for machine in data:
+            data[machine]["Color"] = f'#{r():02x}{r():02x}{r():02x}'
+            data[machine]["Visible"] = "True"
+
+        self.model._data["Machine"] = data
+        self.model.layoutChanged.emit()
 
     def openColorDialog(self):
         indexes = self.listView.selectedIndexes()
@@ -87,9 +114,11 @@ class MachineConfig(QtWidgets.QMainWindow, machine_config.Ui_MainWindow):
         xmax = self.model._data["Machine"][keys[index.row()]]["Data"][0][1]
         ymin, ymax = self.model._data["Machine"][keys[index.row()]]["Data"][1]
         zmin, zmax = self.model._data["Machine"][keys[index.row()]]["Data"][2]
-        color = self.model._data["Machine"][keys[index.row()]]["Color"]
-
-
+        visible = self.model._data["Machine"][keys[index.row()]]["Visible"]
+        try:
+            color = self.model._data["Machine"][keys[index.row()]]["Color"]
+        except:
+            pass
 
         self.lineEdit_X_Min.setText(xmin)
         self.lineEdit_XMax.setText(xmax)
@@ -97,14 +126,15 @@ class MachineConfig(QtWidgets.QMainWindow, machine_config.Ui_MainWindow):
         self.lineEdit_YMax.setText(ymax)
         self.lineEdit_ZMin.setText(zmin)
         self.lineEdit_ZMax.setText(zmax)
+        if visible == "True":
+            self.checkBox_Visible.setChecked(True)
+        else:
+            self.checkBox_Visible.setChecked(False)
 
-
-
-
-
-        self.pushButton_Color.setStyleSheet(f"background-color: {color}")
-
-
+        try:
+            self.pushButton_Color.setStyleSheet(f"background-color: {color}")
+        except:
+            pass
 
     def snapshot(self):
         try:
@@ -119,11 +149,10 @@ class MachineConfig(QtWidgets.QMainWindow, machine_config.Ui_MainWindow):
             rack = self.lineEdit_Rack.text()
             slot = self.lineEdit_Slot.text()
 
-
-
             if self.parent().clientConnected:
                 data = self.self.parent().client.db_get(int(DB))
-                self.model2._data = [snap7.util.get_real(data, int(X)) for X in [Xmin, Xmax, ymin, ymax, zmin, zmax] if X.isdigit()]
+                self.model2._data = [snap7.util.get_real(data, int(X)) for X in [Xmin, Xmax, ymin, ymax, zmin, zmax] if
+                                     X.isdigit()]
                 self.model2.layoutChanged.emit()
             else:
                 self.parent().client.connect(ip, int(rack), int(slot))
@@ -160,13 +189,14 @@ class MachineConfig(QtWidgets.QMainWindow, machine_config.Ui_MainWindow):
         elif chk_z:
             self.checkBox_Z.setChecked(True)
 
-
     def add(self):
         if len(self.model._data["Machine"]) > 0:
             key = max([int(x) for x in self.model._data["Machine"].keys()])
-            self.model._data["Machine"][str(key + 1)] = {"Name": "New", "Data": [["", ""], ["", ""], ["", ""]]}
+            self.model._data["Machine"][str(key + 1)] = {"Name": "New", "Data": [["", ""], ["", ""], ["", ""]],
+                                                         "Visible": "True"}
         else:
-            self.model._data["Machine"]["0"] = {"Name": "New", "Data": [["", ""], ["", ""], ["", ""]]}
+            self.model._data["Machine"]["0"] = {"Name": "New", "Data": [["", ""], ["", ""], ["", ""]],
+                                                "Visible": "True"}
         self.model.layoutChanged.emit()
 
     def save(self):
@@ -179,10 +209,11 @@ class MachineConfig(QtWidgets.QMainWindow, machine_config.Ui_MainWindow):
             zmin = self.lineEdit_ZMin.text()
             zmax = self.lineEdit_ZMax.text()
             color = self.pushButton_Color.palette().button().color().name()
-
+            Visible = self.checkBox_Visible.isChecked()
 
             self.model._data["Machine"][str(index.row())]["Data"] = [[Xmin, Xmax], [ymin, ymax], [zmin, zmax]]
             self.model._data["Machine"][str(index.row())]["Color"] = color
+            self.model._data["Machine"][str(index.row())]["Visible"] = str(Visible)
 
         ip = self.lineEdit_IP.text()
         rack = self.lineEdit_Rack.text()
@@ -197,7 +228,7 @@ class MachineConfig(QtWidgets.QMainWindow, machine_config.Ui_MainWindow):
         y_chk = self.checkBox_Y.isChecked()
         z_chk = self.checkBox_Z.isChecked()
 
-        self.model._data["Origo"] = [[x,x_chk], [y,y_chk], [z,z_chk]]
+        self.model._data["Origo"] = [[x, x_chk], [y, y_chk], [z, z_chk]]
 
         with open("Setup.json", "w") as f:
             data = json.dump(self.model._data, f)
