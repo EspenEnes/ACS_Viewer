@@ -41,7 +41,10 @@
     <item row="0" column="0" colspan="2">
      <widget class="QOpenGLWidget" name="openGLWidget">
       <property name="focusPolicy">
-       <enum>Qt::ClickFocus</enum>
+       <enum>Qt::StrongFocus</enum>
+      </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::ActionsContextMenu</enum>
       </property>
      </widget>
     </item>
@@ -63,20 +66,68 @@
     <addaction name="actionACS"/>
     <addaction name="actionEnviorment"/>
    </widget>
+   <widget class="QMenu" name="menuShow">
+    <property name="title">
+     <string>Show</string>
+    </property>
+    <addaction name="actionMacines"/>
+   </widget>
    <addaction name="menu_Config"/>
+   <addaction name="menuShow"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="dockWidget_2">
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QListView" name="listView_2">
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::ExtendedSelection</enum>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="actionACS">
    <property name="text">
-    <string>Machines</string>
+    <string>Config</string>
    </property>
   </action>
   <action name="actionEnviorment">
    <property name="text">
-    <string>Viewer</string>
+    <string>Overview</string>
+   </property>
+  </action>
+  <action name="actionMacines">
+   <property name="text">
+    <string>Macines</string>
    </property>
   </action>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>actionMacines</sender>
+   <signal>triggered()</signal>
+   <receiver>dockWidget_2</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>136</x>
+     <y>319</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

@@ -5,11 +5,10 @@ import numpy
 import snap7
 from OpenGL.GL import *
 from OpenGL.GLU import gluPerspective, gluLookAt
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QRunnable, QThreadPool, QObject, pyqtSignal
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtCore import QRunnable, QThreadPool, QObject, pyqtSignal, QEvent, Qt
 from PyQt5.QtGui import QMouseEvent, QWheelEvent
-from PyQt5.QtWidgets import QApplication
-
+from PyQt5.QtWidgets import QApplication, QMenu, QAction
 
 import machine_config
 from QT_Design import main_ACS
@@ -65,8 +64,6 @@ class PlcWorker(QRunnable):
 
 
 class ACSviewer(QtWidgets.QMainWindow, main_ACS.Ui_MainWindow):
-    keyPressed = QtCore.pyqtSignal(int)
-    keyRelese = QtCore.pyqtSignal(int)
 
     def __init__(self, parent=None):
         super(ACSviewer, self).__init__(parent)
@@ -89,12 +86,39 @@ class ACSviewer(QtWidgets.QMainWindow, main_ACS.Ui_MainWindow):
         self.DB = self.machConf_Dialog.model._data["PLC"][3]
         self.client = snap7.client.Client()
         self.pushButton.setStyleSheet(f"background-color: green")
+        self.listView_2.setModel(self.machConf_Dialog.model)
 
-    def keyPressEvent(self, event):
-        self.keyPressed.emit(event.key())
+        self.listView_2.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.listView_2.customContextMenuRequested[QtCore.QPoint].connect(self.rightMenuShow)
 
-    def keyReleaseEvent(self, event):
-        self.keyRelese.emit(event.key())
+    def rightMenuShow(self):
+        rightMenu = QMenu(self.listView_2)
+        hideAction = QAction(u"Hide", self, triggered=lambda: self.hidei("Hide"))
+        rightMenu.addAction(hideAction)
+        hideAction = QAction(u"UnHide", self, triggered=lambda: self.hidei("UnHide"))
+        rightMenu.addAction(hideAction)
+        rightMenu.exec_(QtGui.QCursor.pos())
+
+    def hidei(self, cmd):
+        indexes = self.listView_2.selectedIndexes()
+        keys = [x for x in self.machConf_Dialog.model._data["Machine"].keys()]
+        for index in indexes:
+            Visible = self.machConf_Dialog.model._data["Machine"][keys[index.row()]]["Visible"]
+            if cmd == "Hide":
+                self.machConf_Dialog.model._data["Machine"][keys[index.row()]]["Visible"] = "False"
+            elif cmd == "UnHide":
+                self.machConf_Dialog.model._data["Machine"][keys[index.row()]]["Visible"] = "True"
+
+    def eventFilter(self, watched, event):
+        if self.machConf_Dialog.isActiveWindow():
+            return super().eventFilter(watched, event)
+        if event.type() == QEvent.KeyPress:
+            self.openGLWidget.event(event)
+            return True
+        elif event.type() == QEvent.KeyRelease:
+            self.openGLWidget.event(event)
+            return True
+        return super().eventFilter(watched, event)
 
     def test(self):
         self.machConf_Dialog.show()
@@ -132,9 +156,6 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
         self.cameraFront = [0.0, 0.0, -9]
         self.cameraUp = [0.0, 1.0, 0.0]
         self.left_right_angle = -90.0
-
-        parent.keyPressed.connect(self.keyPressEvent_Parent)
-        parent.keyRelese.connect(self.keyReleseEvent_Parent)
 
     def initializeGL(self):
         glClearColor(0.85, 0.85, 0.85, 1.0)
@@ -205,11 +226,8 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
 
     def paintGL(self):
 
-
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glMatrixMode(GL_MODELVIEW)
-
 
         glLoadIdentity()
         gluLookAt(*self.CamereMove())
@@ -218,12 +236,12 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
             if self.Data["machines"][machine]["Visible"] == "False":
                 continue
 
-            Xmin = self.Data["machines"][machine]["data"][0]# / 1000.0
-            Xmax = self.Data["machines"][machine]["data"][1]# / 1000.0
-            Ymin = self.Data["machines"][machine]["data"][2]# / 1000.0
-            Ymax = self.Data["machines"][machine]["data"][3]# / 1000.0
-            Zmin = self.Data["machines"][machine]["data"][4]# / 1000.0
-            Zmax = self.Data["machines"][machine]["data"][5]# / 1000.0
+            Xmin = self.Data["machines"][machine]["data"][0]  # / 1000.0
+            Xmax = self.Data["machines"][machine]["data"][1]  # / 1000.0
+            Ymin = self.Data["machines"][machine]["data"][2]  # / 1000.0
+            Ymax = self.Data["machines"][machine]["data"][3]  # / 1000.0
+            Zmin = self.Data["machines"][machine]["data"][4]  # / 1000.0
+            Zmax = self.Data["machines"][machine]["data"][5]  # / 1000.0
             color = self.hex_to_rgb(self.Data["machines"][machine]["color"])
 
             if self.Data["origo"][0][1]:
@@ -255,8 +273,6 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
                           ymax, zmin, zmax,
                           (1, 0, 0))
 
-
-
     def hex_to_rgb(self, value):
         value = value.lstrip('#')
         lv = len(value)
@@ -274,42 +290,42 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
 
     # def keyPressEvent(self, event):
 
-    def keyReleseEvent_Parent(self, key):
-        if key == QtCore.Qt.Key_W:
+    def keyReleaseEvent(self, event):
+        if event.key() == QtCore.Qt.Key_W:
             self.fwd = False
-        if key == QtCore.Qt.Key_Up:
+        if event.key() == QtCore.Qt.Key_Up:
             self.up = False
-        if key == QtCore.Qt.Key_S:
+        if event.key() == QtCore.Qt.Key_S:
             self.bwd = False
-        if key == QtCore.Qt.Key_Down:
+        if event.key() == QtCore.Qt.Key_Down:
             self.down = False
-        if key == QtCore.Qt.Key_A:
+        if event.key() == QtCore.Qt.Key_A:
             self.A = False
-        if key == QtCore.Qt.Key_Left:
+        if event.key() == QtCore.Qt.Key_Left:
             self.left = False
-        if key == QtCore.Qt.Key_D:
+        if event.key() == QtCore.Qt.Key_D:
             self.D = False
-        if key == QtCore.Qt.Key_Right:
+        if event.key() == QtCore.Qt.Key_Right:
             self.right = False
 
-    def keyPressEvent_Parent(self, key):
-        if key == QtCore.Qt.Key_W:
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_W:
             self.fwd = True
-        if key == QtCore.Qt.Key_Up:
+        if event.key() == QtCore.Qt.Key_Up:
             self.up = True
-        if key == QtCore.Qt.Key_S:
+        if event.key() == QtCore.Qt.Key_S:
             self.bwd = True
-        if key == QtCore.Qt.Key_Down:
+        if event.key() == QtCore.Qt.Key_Down:
             self.down = True
-        if key == QtCore.Qt.Key_A:
+        if event.key() == QtCore.Qt.Key_A:
             self.A = True
-        if key == QtCore.Qt.Key_Left:
+        if event.key() == QtCore.Qt.Key_Left:
             self.left = True
 
-        if key == QtCore.Qt.Key_D:
+        if event.key() == QtCore.Qt.Key_D:
             self.D = True
 
-        if key == QtCore.Qt.Key_Right:
+        if event.key() == QtCore.Qt.Key_Right:
             self.right = True
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -320,7 +336,7 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
             x = pos.x()
             y = pos.y()
             a = (GLuint * 1)(0)
-            glReadPixels(x,y,1,1,GL_RGB, GL_UNSIGNED_BYTE,a)
+            glReadPixels(x, y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, a)
             print(f"{a[0]:2x}")
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
@@ -339,7 +355,7 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
 
     def draw_machine(self, Xmin, Xmax, Ymin, Ymax, Zmin, Zmax, color):
         glPushMatrix()
-        glColor4f(*color,0.7)
+        glColor4f(*color, 0.7)
         glTranslatef(0, 0, 0)
 
         vertices = [
@@ -366,6 +382,7 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
 def main():
     app = QApplication(sys.argv)
     form = ACSviewer()
+    app.installEventFilter(form)
     form.show()
     sys.exit(app.exec_())
     # app.exec_()

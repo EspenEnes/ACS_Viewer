@@ -3,13 +3,15 @@ import random
 import sys
 
 import snap7
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QColorDialog
+from PyQt5.QtWidgets import QApplication, QColorDialog, QMenu, QAction
 
 from BoxGenerator import getData
 from QT_Design import machine_config
+
+
 
 
 class Model(QtCore.QAbstractTableModel):
@@ -47,8 +49,10 @@ class Model(QtCore.QAbstractTableModel):
     def columnCount(self, parent):
         return 1
 
+
     def flags(self, index):
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+
 
 
 class Model2(QtCore.QAbstractTableModel):
@@ -88,6 +92,29 @@ class MachineConfig(QtWidgets.QMainWindow, machine_config.Ui_MainWindow):
         self.pushButton_Snapshot.clicked.connect(self.snapshot)
         self.pushButton_Color.clicked.connect(self.openColorDialog)
         self.pushButton_Load.clicked.connect(self.loadData)
+
+        self.listView.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.listView.customContextMenuRequested[QtCore.QPoint].connect(self.rightMenuShow)
+
+    def rightMenuShow(self):
+        rightMenu = QMenu(self.listView)
+        removeAction = QAction(u"Delete", self, triggered = self.delete)
+        rightMenu.addAction(removeAction)
+        hideAction = QAction(u"Hide", self, triggered=self.hidei)
+        rightMenu.addAction(hideAction)
+        rightMenu.exec_(QtGui.QCursor.pos())
+
+    def hidei(self):
+        self.checkBox_Visible.toggle()
+        indexes = self.listView.selectedIndexes()
+        for index in indexes:
+            Visible = self.checkBox_Visible.isChecked()
+            self.model._data["Machine"][str(index.row())]["Visible"] = str(Visible)
+
+
+
+
+
 
     def loadData(self):
         clipboard = QApplication.clipboard().text()
@@ -198,6 +225,8 @@ class MachineConfig(QtWidgets.QMainWindow, machine_config.Ui_MainWindow):
             self.model._data["Machine"]["0"] = {"Name": "New", "Data": [["", ""], ["", ""], ["", ""]],
                                                 "Visible": "True"}
         self.model.layoutChanged.emit()
+
+
 
     def save(self):
         indexes = self.listView.selectedIndexes()
