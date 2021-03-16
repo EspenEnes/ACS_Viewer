@@ -1,6 +1,6 @@
 
 from math import cos, sin, radians
-import numpy
+import numpy as np
 
 from OpenGL.GL import *
 from OpenGL.GLU import gluPerspective, gluLookAt
@@ -26,6 +26,7 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
         self.cameraFront = [0.0, 0.0, -9]
         self.cameraUp = [0.0, 1.0, 0.0]
         self.left_right_angle = -90.0
+        self.test_mode = False
 
     def initializeGL(self):
         glClearColor(0.85, 0.85, 0.85, 1.0)
@@ -36,8 +37,13 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
 
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glEnable(GL_BLEND)
+        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        # glEnable(GL_BLEND)
+        glShadeModel(GL_SMOOTH)
+        glEnable(GL_COLOR_MATERIAL)
+        glEnable(GL_LIGHTING)
+        glEnable(GL_LIGHT0)
+        glEnable(GL_NORMALIZE)
         self.Data = {}
         self.Data["machines"] = {}
         self.Data["origo"] = [[10, False], [10, False], [0, False]]
@@ -70,12 +76,12 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
         if self.down: self.diff = QtCore.QPoint(0, +100)
         if self.left: self.diff = QtCore.QPoint(-100, 0)
         if self.A:
-            a = numpy.cross(self.cameraFront, self.cameraUp)
+            a = np.cross(self.cameraFront, self.cameraUp)
             self.cameraPos[0] += (a[0] * 0.5)
             self.cameraPos[1] += (a[1] * 0.5)
             self.cameraPos[2] += (a[2] * 0.5)
         if self.D:
-            a = numpy.cross(self.cameraFront, self.cameraUp)
+            a = np.cross(self.cameraFront, self.cameraUp)
             self.cameraPos[0] -= (a[0] * 0.5)
             self.cameraPos[1] -= (a[1] * 0.5)
             self.cameraPos[2] -= (a[2] * 0.5)
@@ -143,15 +149,56 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
                           ymax, zmin, zmax,
                           (1, 0, 0))
 
+        if self.test_mode:
+            self.draw_machine(5, 6, 5,
+                              6, 0, 5,
+                              (0, 1, 0))
+            self.draw_machine(1, 2, 1,
+                              2, 0, 5,
+                              (0, 0, 1))
+
+            self.draw_machine(10, 11, 10,
+                              11, 0, 5,
+                              (.15725, .43256, 1))
+            self.grid()
+
+
+    def grid(self):
+        for i in range(1, 20):
+            for j in range(1, 20):
+
+                if i % 2 == 0:
+                    glColor3f(1, 0, 0)
+                else:
+                    glColor3f(0, 1, 0)
+                if j % 2 == 0:
+                    x = 0 + i
+                else:
+                    x = 1 + i
+                glBegin(GL_POLYGON)
+                glVertex3f(-0.5+x, 0.0, -0.5+j)
+                glVertex3f(-0.5+x, 0.0, 0.5+j)
+                glVertex3f(0.5+x, 0, 0.5+j)
+                glVertex3f(0.5+x, 0, -0.5+j)
+                glEnd()
+
+
+
     def hex_to_rgb(self, value):
         value = value.lstrip('#')
         lv = len(value)
         return tuple(int(value[i:i + lv // 3], 16) / 255 for i in range(0, lv, lv // 3))
 
-    def Lines(self, a, b, c, d, vertices):
+    def Lines(self, a, b, c, d, vertices,plane):
+        if plane == "up": plane = (0,1,0)
+        if plane == "down": plane = (0,-1,0)
+        if plane == "front": plane = (0,0,-1)
+        if plane == "back": plane = (0,0,1)
+        if plane == "left": plane = (-1,0,0)
+        if plane == "right": plane = (1,0,0)
         # draw a quad
         glBegin(GL_QUADS)
-        # glNormal3fv(self.normals[n])
+        glNormal3fv(plane)
         glVertex3fv(vertices[a])
         glVertex3fv(vertices[b])
         glVertex3fv(vertices[c])
@@ -228,6 +275,7 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
         glColor4f(*color, 0.7)
         glTranslatef(0, 0, 0)
 
+
         vertices = [
             (Xmin, Zmin, Ymax),
             (Xmax, Zmin, Ymax),
@@ -239,12 +287,12 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
             (Xmin, Zmax, Ymin),
         ]
 
-        self.Lines(0, 1, 2, 3, vertices)
-        self.Lines(3, 7, 4, 0, vertices)
-        self.Lines(0, 1, 5, 4, vertices)
-        self.Lines(4, 7, 6, 5, vertices)
-        self.Lines(5, 1, 2, 6, vertices)
-        self.Lines(6, 7, 3, 2, vertices)
+        self.Lines(0, 1, 2, 3, vertices, "back" )
+        self.Lines(3, 7, 4, 0, vertices, "left")
+        self.Lines(0, 1, 5, 4, vertices, "down")
+        self.Lines(4, 7, 6, 5, vertices, "front")
+        self.Lines(5, 1, 2, 6, vertices, "right")
+        self.Lines(6, 7, 3, 2, vertices, "up")
 
         glPopMatrix()
 

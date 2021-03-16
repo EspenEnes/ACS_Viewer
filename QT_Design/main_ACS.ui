@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>873</width>
-    <height>639</height>
+    <height>690</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -53,7 +53,7 @@
    <addaction name="menu_Config"/>
    <addaction name="menuShow"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="CostumStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget_2">
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -151,6 +151,11 @@
    <class>MyOPENGL</class>
    <extends>QOpenGLWidget</extends>
    <header location="global">myopengl.h</header>
+  </customwidget>
+  <customwidget>
+   <class>CostumStatusBar</class>
+   <extends>QStatusBar</extends>
+   <header location="global">costumstatusbar.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

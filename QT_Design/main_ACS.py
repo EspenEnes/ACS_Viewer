@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(873, 639)
+        MainWindow.resize(873, 690)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -33,7 +33,7 @@ class Ui_MainWindow(object):
         self.menuShow = QtWidgets.QMenu(self.menubar)
         self.menuShow.setObjectName("menuShow")
         MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar = CostumStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.dockWidget_2 = QtWidgets.QDockWidget(MainWindow)
@@ -107,4 +107,5 @@ class Ui_MainWindow(object):
         self.actionUnhide.setText(_translate("MainWindow", "Unhide"))
         self.actionDetails_2.setText(_translate("MainWindow", "Details"))
         self.actionCompare.setText(_translate("MainWindow", "Compare"))
+from costumstatusbar import CostumStatusBar
 from myopengl import MyOPENGL
