@@ -67,7 +67,7 @@ def getData(clipboard=None):
 
 def DataBlock_to_Array(clipboard):
     Types = {"BOOL": 1, "BYTE": 8, "WORD": 16, "DWORD": 32, "INT": 16, "DINT": 32, "REAL": 32, "S5TIME": 16, "TIME": 32,
-             "DATE": 16, "TIME_OF:DAY": 32, "CHAR": 8}
+             "DATE": 16, "TIME_OF:DAY": 32, "CHAR": 8, "STRING": 26 }
     inData = clipboard
     adress = 0
     outData = {}

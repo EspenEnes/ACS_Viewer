@@ -13,7 +13,7 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.up_down_angle = 0.0
+        self.up_down_angle = 20.0
         self.diff = QtCore.QPoint(0, 0)
         self.left_right_angle = 0.0
 
@@ -22,11 +22,11 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
         timer.timeout.connect(self.update)
         timer.start()
 
-        self.cameraPos = [0.0, 0.0, -10]
-        self.cameraFront = [0.0, 0.0, -9]
+        self.cameraPos = [0, 10.0, -10]
+        self.cameraFront = [0.0, 10.0, -9]
         self.cameraUp = [0.0, 1.0, 0.0]
         self.left_right_angle = -90.0
-        self.test_mode = False
+        self.test_mode = True
 
     def initializeGL(self):
         glClearColor(0.85, 0.85, 0.85, 1.0)
@@ -55,6 +55,9 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
         self.left = False
         self.D = False
         self.right = False
+
+        self.cameraPos = [int(self.Data["origo"][0][0]), 10.0, -10]
+
 
     def resizeGL(self, width, height):
         glMatrixMode(GL_PROJECTION)
@@ -149,6 +152,8 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
                           ymax, zmin, zmax,
                           (1, 0, 0))
 
+        self.grid()
+
         if self.test_mode:
             self.draw_machine(5, 6, 5,
                               6, 0, 5,
@@ -160,17 +165,18 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
             self.draw_machine(10, 11, 10,
                               11, 0, 5,
                               (.15725, .43256, 1))
-            self.grid()
+
 
 
     def grid(self):
+        glDisable(GL_LIGHTING)
         for i in range(1, 20):
             for j in range(1, 20):
 
                 if i % 2 == 0:
-                    glColor3f(1, 0, 0)
+                    glColor3f(.5, .5, .5)
                 else:
-                    glColor3f(0, 1, 0)
+                    glColor3f(0, 0, 0)
                 if j % 2 == 0:
                     x = 0 + i
                 else:
@@ -181,6 +187,7 @@ class MyOPENGL(QtWidgets.QOpenGLWidget):
                 glVertex3f(0.5+x, 0, 0.5+j)
                 glVertex3f(0.5+x, 0, -0.5+j)
                 glEnd()
+        glEnable(GL_LIGHTING)
 
 
 
